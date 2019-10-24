@@ -61,6 +61,7 @@ oauth2server.routes.get('/oauth/userinfo', function (req, res) {
     username: user.profile.pixelhumain.username,
     email: user.profile.pixelhumain.email,
     email_verified : true,
-    picture: `${Meteor.settings.urlimage}${user.profile.pixelhumain.profilThumbImageUrl}`
+    picture: `${Meteor.settings.urlimage}${user.profile.pixelhumain.profilThumbImageUrl}`,
+    apiToken: user.profile.token
   });
 });

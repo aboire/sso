@@ -6,10 +6,11 @@ Accounts.registerLoginHandler(function(loginRequest) {
     return null;
   }
 
-  const response = HTTP.call('POST', `${Meteor.settings.endpoint}/${Meteor.settings.module}/person/authenticate`, {
+  const response = HTTP.call('POST', `${Meteor.settings.endpoint}/${Meteor.settings.module}/person/authenticatetoken`, {
     params: {
       email: loginRequest.email,
       pwd: loginRequest.pwd,
+      tokenName: 'sso'
     },
   });
 
@@ -26,6 +27,9 @@ Accounts.registerLoginHandler(function(loginRequest) {
 
     // ok valide
     const userM = Meteor.users.findOne({ _id: retourId });
+    
+    let token = response.data.token ? response.data.token : false;
+
     // console.log(userM);
     if (userM) {
       // Meteor.user existe
@@ -37,6 +41,9 @@ Accounts.registerLoginHandler(function(loginRequest) {
       insert.email = account.email;
       if (account.profilThumbImageUrl){
         insert.profilThumbImageUrl = account.profilThumbImageUrl;
+      }
+      if (token) {
+        Meteor.users.update(userId, { $set: { 'profile.token': token } });
       }
       Meteor.users.update(userId, { $set: { emails: [loginRequest.email], 'profile.pixelhumain': insert } });
     } else {
@@ -51,13 +58,22 @@ Accounts.registerLoginHandler(function(loginRequest) {
       insert.profile.pixelhumain.name = account.name;
       insert.profile.pixelhumain.username = account.username;
       insert.profile.pixelhumain.email = account.email;
+      if (token) {
+        insert.profile.token = token;
+      }
       if (account.profilThumbImageUrl) {
       insert.profile.pixelhumain.profilThumbImageUrl = account.profilThumbImageUrl;
       }
       userId = Meteor.users.insert(insert);
     }
 
-
+    if (!token) {
+      const userToken = Meteor.users.findOne({ _id: retourId });
+      if (userToken && userToken.profile && userToken.profile.token) {
+        token = userToken.profile.token
+      }
+    }
+    
     const stampedToken = Accounts._generateStampedLoginToken();
     Meteor.users.update(userId,
       { $push: { 'services.resume.loginTokens': stampedToken } },
@@ -67,6 +83,7 @@ Accounts.registerLoginHandler(function(loginRequest) {
     return {
       userId,
       token: stampedToken.token,
+      apiToken: token
     };
   }
   if (response && response.data && response.data.result === false) {
