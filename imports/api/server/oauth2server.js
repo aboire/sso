@@ -57,10 +57,12 @@ oauth2server.routes.get('/oauth/userinfo', function (req, res) {
   
   return res.send({
     sub: user._id,
+    user_id: user._id,
     name: user.profile.pixelhumain.name,
+    displayName: user.profile.pixelhumain.name,
     username: user.profile.pixelhumain.username,
     email: user.profile.pixelhumain.email,
-    email_verified : true,
+    email_verified: true,
     picture: `${Meteor.settings.urlimage}${user.profile.pixelhumain.profilThumbImageUrl}`,
     apiToken: user.profile.token
   });
